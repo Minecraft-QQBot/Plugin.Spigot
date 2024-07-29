@@ -27,6 +27,7 @@ public class WsSender extends WebSocketClient {
         this.addHeader("info", this.utils.encode(headers));
     }
 
+//    发送事件基本函数
     public boolean sendData(String event_type, HashMap<String, ?> data) {
         if (this.isClosed()) {
             this.logger.warning("无法发送数据，因为连接已关闭！正在尝试重新连接……");
@@ -45,6 +46,7 @@ public class WsSender extends WebSocketClient {
         message_data.put("data", data);
         message_data.put("type", event_type);
         this.send(this.utils.encode(message_data));
+//        等待响应
         while (this.message == null) {
             try {
                 this.wait(100);
@@ -54,6 +56,7 @@ public class WsSender extends WebSocketClient {
         }
         HashMap<String, ?> response = this.utils.decode(this.message);
         this.message = null;
+//        返回是否成功
         return (boolean) response.get("success");
     }
 
@@ -113,6 +116,7 @@ public class WsSender extends WebSocketClient {
 
     @Override
     public void onMessage(String message) {
+//        收到消息时设置 message 为收到的消息
         this.message = message;
     }
 

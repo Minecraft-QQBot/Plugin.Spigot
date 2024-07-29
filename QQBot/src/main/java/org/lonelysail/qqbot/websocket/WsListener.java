@@ -28,6 +28,8 @@ public class WsListener extends WebSocketClient {
         this.utils = new Utils();
         this.logger = plugin.getLogger();
         this.server = plugin.getServer();
+
+        // 添加请求头信息
         HashMap<String, String> headers = new HashMap<>();
         headers.put("name", config.getString("name"));
         headers.put("token", config.getString("token"));
@@ -36,6 +38,7 @@ public class WsListener extends WebSocketClient {
         this.addHeader("info", this.utils.encode(headers));
     }
 
+    // 处理命令请求
     private HashMap<String, ?> command(HashMap<?, ?> data) {
         CustomCommandSender sender = new CustomCommandSender();
         Bukkit.dispatchCommand(sender, (String) data.get("command"));
@@ -44,6 +47,7 @@ public class WsListener extends WebSocketClient {
         return response;
     }
 
+    // 获取在线玩家列表
     private HashMap<String, ?> playerList(HashMap<?, ?> data) {
         List<String> players = new ArrayList<>();
         for (Player player : this.server.getOnlinePlayers()) players.add(player.getName());
@@ -67,14 +71,21 @@ public class WsListener extends WebSocketClient {
         HashMap<String, ?> response;
         HashMap<String, Object> responseMessage = new HashMap<>();
 
-        if (Objects.equals(event_type, "command")) response = this.command(data);
-        else if (Objects.equals(event_type, "player_list")) response = this.playerList(data);
-        else {
+        if (Objects.equals(event_type, "command")) {
+            // 如果事件类型是"command"，则调用command方法处理
+            response = this.command(data);
+        } else if (Objects.equals(event_type, "player_list")) {
+            // 如果事件类型是"player_list"，则调用playerList方法处理
+            response = this.playerList(data);
+        } else {
+            // 如果事件类型未知，则记录警告信息并返回失败响应
             this.logger.warning("Unknown event type: " + event_type);
             responseMessage.put("success", false);
             this.send(this.utils.encode(responseMessage));
             return;
         }
+
+        // 构造成功响应并发送
         responseMessage.put("success", true);
         responseMessage.put("data", response);
         this.send(this.utils.encode(responseMessage));
@@ -86,6 +97,7 @@ public class WsListener extends WebSocketClient {
         if (this.serverRunning) {
             this.logger.info("Trying to reconnecting...");
             try {
+//                隔 5s 重连
                 this.wait(5000);
             } catch (InterruptedException ignored) {
             }
@@ -95,6 +107,5 @@ public class WsListener extends WebSocketClient {
 
     @Override
     public void onError(Exception ex) {
-
     }
 }
