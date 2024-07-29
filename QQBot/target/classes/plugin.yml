@@ -1,0 +1,4 @@
+name: QQBot
+version: '1.0-SNAPSHOT'
+main: org.lonelysail.qqbot.QQBot
+api-version: '1.15'

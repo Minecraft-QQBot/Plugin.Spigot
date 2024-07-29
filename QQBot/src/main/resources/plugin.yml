@@ -1,0 +1,4 @@
+name: QQBot
+version: '${project.version}'
+main: org.lonelysail.qqbot.QQBot
+api-version: '1.15'

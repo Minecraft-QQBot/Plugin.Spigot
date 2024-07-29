@@ -1,4 +1,4 @@
-package org.lonelysail.qqbot;
+package org.lonelysail.qqbot.server;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
@@ -8,18 +8,19 @@ import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
 
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 
 public class CustomCommandSender implements CommandSender {
+    public List<String> messages = new ArrayList<>();
+
     @Override
     public void sendMessage(String message) {
-
+        this.messages.add(message);
     }
 
     @Override
     public void sendMessage(String[] messages) {
-
+        this.messages.addAll(Arrays.asList(messages));
     }
 
     @Override
@@ -99,5 +100,6 @@ public class CustomCommandSender implements CommandSender {
 
     @Override
     public void setOp(boolean value) {
+
     }
 }
