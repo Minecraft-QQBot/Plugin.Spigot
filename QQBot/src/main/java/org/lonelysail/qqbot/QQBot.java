@@ -12,6 +12,7 @@ import java.util.Objects;
 // QQBot类继承自JavaPlugin，是插件的主类
 public final class QQBot extends JavaPlugin {
     public Configuration config;
+
     private WsListener websocketListener;
     private WsSender websocketSender;
 
@@ -25,18 +26,18 @@ public final class QQBot extends JavaPlugin {
     // 插件启用时调用的方法，初始化并启动各种服务
     @Override
     public void onEnable() {
-        EventListener eventListener = new EventListener(this.websocketSender);
-        QQCommand command = new QQCommand(this.websocketSender, this.config.getString("name"));
-        Objects.requireNonNull(this.getCommand("qq")).setExecutor(command);
-        this.getServer().getPluginManager().registerEvents(eventListener, this);
+        this.getLogger().info("正在初始化与机器人的链接……");
         this.websocketSender = new WsSender(this, this.config);
         this.websocketSender.connect();
         this.websocketListener = new WsListener(this, this.config);
         this.websocketListener.connect();
+        EventListener eventListener = new EventListener(this.websocketSender);
+        QQCommand command = new QQCommand(this.websocketSender, this.config.getString("name"));
+        Objects.requireNonNull(this.getCommand("qq")).setExecutor(command);
+        this.getServer().getPluginManager().registerEvents(eventListener, this);
         try {
-            this.wait(1000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            Thread.sleep(1000);
+        } catch (InterruptedException ignored) {
         }
         this.websocketSender.sendServerStartup();
     }

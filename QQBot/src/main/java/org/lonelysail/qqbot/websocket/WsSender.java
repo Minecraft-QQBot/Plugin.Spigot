@@ -11,16 +11,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
 public class WsSender extends WebSocketClient {
-    private String message = null;
-    private final Utils utils;
+    private String message;
+
     private final Logger logger;
+    private final Utils utils = new Utils();
+    private final Lock lock = new ReentrantLock();
+    private final Condition condition = lock.newCondition();
+
 
     public WsSender(JavaPlugin plugin, Configuration config) {
         super(URI.create(Objects.requireNonNull(config.getString("uri"))).resolve("websocket/bot"));
-        this.utils = new Utils();
         this.logger = plugin.getLogger();
         HashMap<String, String> headers = new HashMap<>();
         headers.put("name", config.getString("name"));
@@ -29,18 +35,18 @@ public class WsSender extends WebSocketClient {
         this.addHeader("info", this.utils.encode(headers));
     }
 
-//    发送事件基本函数
+    //    发送事件基本函数
     public boolean sendData(String event_type, Object data) {
         if (this.isClosed()) {
-            this.logger.warning("无法发送数据，因为连接已关闭！正在尝试重新连接……");
+            this.logger.warning("[Sender] 无法发送数据，因为连接已关闭！正在尝试重新连接……");
             this.reconnect();
             try {
-                this.wait(5000);
+                Thread.sleep(5000);
             } catch (InterruptedException error) {
-                this.logger.warning("无法重新连接，请检查机器人运行是否正常！");
+                this.logger.warning("[Sender] 无法重新连接，请检查机器人运行是否正常！");
             }
             if (this.isClosed()) {
-                this.logger.warning("无法重新连接，请检查机器人运行是否正常！");
+                this.logger.warning("[Sender] 无法重新连接，请检查机器人运行是否正常！");
                 return false;
             }
         }
@@ -49,12 +55,13 @@ public class WsSender extends WebSocketClient {
         messageData.put("type", event_type);
         this.send(this.utils.encode(messageData));
 //        等待响应
-        while (this.message == null) {
-            try {
-                this.wait(100);
-            } catch (InterruptedException error) {
-                error.printStackTrace();
-            }
+        this.lock.lock();
+        try {
+            while (this.message == null) this.condition.await();
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+        } finally {
+            this.lock.unlock();
         }
         HashMap<String, ?> response = this.utils.decode(this.message);
         this.message = null;
@@ -107,18 +114,24 @@ public class WsSender extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
-        this.logger.info("The event connection to the bot server was opened.");
+        this.logger.info("[Sender] 与机器人成功建立链接！");
     }
 
     @Override
     public void onMessage(String message) {
 //        收到消息时设置 message 为收到的消息
-        this.message = message;
+        this.lock.lock();
+        try {
+            this.message = message;
+            this.condition.signalAll();
+        } finally {
+            this.lock.unlock();
+        }
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        this.logger.info("与机器人的连接已断开！");
+        this.logger.info("[Sender] 与机器人的连接已断开！");
     }
 
     @Override

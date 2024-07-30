@@ -17,8 +17,7 @@ public class QQCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length != 1) {
-            sender.sendMessage("§c参数错误！");
-            return true;
+            return false;
         }
         String message = String.format("[%s] <%s> %s", this.name, sender.getName(), args[0]);
         if (this.sender.sendSynchronousMessage(message)) sender.sendMessage("§a发送消息成功！");
