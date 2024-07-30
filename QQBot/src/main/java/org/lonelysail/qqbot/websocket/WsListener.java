@@ -39,21 +39,17 @@ public class WsListener extends WebSocketClient {
     }
 
     // 处理命令请求
-    private HashMap<String, ?> command(HashMap<?, ?> data) {
+    private List<String> command(HashMap<?, ?> data) {
         CustomCommandSender sender = new CustomCommandSender();
         Bukkit.dispatchCommand(sender, (String) data.get("command"));
-        HashMap<String, Object> response = new HashMap<>();
-        response.put("response", sender.messages);
-        return response;
+        return sender.messages;
     }
 
     // 获取在线玩家列表
-    private HashMap<String, ?> playerList(HashMap<?, ?> data) {
+    private List<String> playerList(HashMap<?, ?> data) {
         List<String> players = new ArrayList<>();
         for (Player player : this.server.getOnlinePlayers()) players.add(player.getName());
-        HashMap<String, List<String>> response = new HashMap<>();
-        response.put("players", players);
-        return response;
+        return players;
     }
 
     @Override
@@ -68,7 +64,7 @@ public class WsListener extends WebSocketClient {
         String event_type = (String) map.get("type");
         HashMap<?, ?> data = (HashMap<?, ?>) map.get("data");
 
-        HashMap<String, ?> response;
+        Object response;
         HashMap<String, Object> responseMessage = new HashMap<>();
 
         if (Objects.equals(event_type, "command")) {
@@ -79,7 +75,7 @@ public class WsListener extends WebSocketClient {
             response = this.playerList(data);
         } else {
             // 如果事件类型未知，则记录警告信息并返回失败响应
-            this.logger.warning("Unknown event type: " + event_type);
+            this.logger.warning("未知的事件类型: " + event_type);
             responseMessage.put("success", false);
             this.send(this.utils.encode(responseMessage));
             return;

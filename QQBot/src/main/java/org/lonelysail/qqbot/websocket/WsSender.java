@@ -7,7 +7,9 @@ import org.java_websocket.handshake.ServerHandshake;
 import org.lonelysail.qqbot.Utils;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -28,12 +30,12 @@ public class WsSender extends WebSocketClient {
     }
 
 //    发送事件基本函数
-    public boolean sendData(String event_type, HashMap<String, ?> data) {
+    public boolean sendData(String event_type, Object data) {
         if (this.isClosed()) {
             this.logger.warning("无法发送数据，因为连接已关闭！正在尝试重新连接……");
             this.reconnect();
             try {
-                this.wait(1000);
+                this.wait(5000);
             } catch (InterruptedException error) {
                 this.logger.warning("无法重新连接，请检查机器人运行是否正常！");
             }
@@ -42,10 +44,10 @@ public class WsSender extends WebSocketClient {
                 return false;
             }
         }
-        HashMap<String, Object> message_data = new HashMap<>();
-        message_data.put("data", data);
-        message_data.put("type", event_type);
-        this.send(this.utils.encode(message_data));
+        HashMap<String, Object> messageData = new HashMap<>();
+        messageData.put("data", data);
+        messageData.put("type", event_type);
+        this.send(this.utils.encode(messageData));
 //        等待响应
         while (this.message == null) {
             try {
@@ -73,39 +75,33 @@ public class WsSender extends WebSocketClient {
     }
 
     public void sendPlayerLeft(String name) {
-        HashMap<String, Object> data = new HashMap<>();
-        data.put("player", name);
-        if (this.sendData("player_left", data)) this.logger.info("发送玩家离开消息成功！");
+        if (this.sendData("player_left", name)) this.logger.info("发送玩家离开消息成功！");
         else this.logger.warning("发送玩家离开消息失败！请检查机器人是否启动后再次尝试。");
     }
 
     public void sendPlayerJoined(String name) {
-        HashMap<String, Object> data = new HashMap<>();
-        data.put("player", name);
-        if (this.sendData("player_joined", data)) this.logger.info("发送玩家进入消息成功！");
+        if (this.sendData("player_joined", name)) this.logger.info("发送玩家进入消息成功！");
         else this.logger.warning("发送玩家进入消息失败！请检查机器人是否启动后再次尝试。");
     }
 
     public void sendPlayerChat(String name, String message) {
-        HashMap<String, Object> data = new HashMap<>();
-        data.put("player", name);
-        data.put("message", message);
+        List<String> data = new ArrayList<>();
+        data.add(name);
+        data.add(message);
         if (this.sendData("player_chat", data)) this.logger.info("发送玩家消息成功！");
         else this.logger.warning("发送玩家消息失败！请检查机器人是否启动后再次尝试。");
     }
 
     public void sendPlayerDeath(String name, String message) {
-        HashMap<String, Object> data = new HashMap<>();
-        data.put("player", name);
-        data.put("message", message);
+        List<String> data = new ArrayList<>();
+        data.add(name);
+        data.add(message);
         if (this.sendData("player_death", data)) this.logger.info("发送玩家死亡消息成功！");
         else this.logger.warning("发送玩家死亡消息失败！请检查机器人是否启动后再次尝试。");
     }
 
     public boolean sendSynchronousMessage(String message) {
-        HashMap<String, Object> data = new HashMap<>();
-        data.put("message", message);
-        return this.sendData("message", data);
+        return this.sendData("message", message);
     }
 
 
