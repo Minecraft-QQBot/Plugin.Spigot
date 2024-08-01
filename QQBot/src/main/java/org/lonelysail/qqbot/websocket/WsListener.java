@@ -1,5 +1,6 @@
 package org.lonelysail.qqbot.websocket;
 
+import com.sun.management.OperatingSystemMXBean;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.configuration.Configuration;
@@ -8,14 +9,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.lonelysail.qqbot.Utils;
-import org.lonelysail.qqbot.server.CustomCommandSender;
 
+import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
 
 public class WsListener extends WebSocketClient {
@@ -25,6 +25,8 @@ public class WsListener extends WebSocketClient {
     private final JavaPlugin plugin;
 
     private final Utils utils = new Utils();
+    private final OperatingSystemMXBean bean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
+
 
     public WsListener(JavaPlugin plugin, Configuration config) {
         super(URI.create(Objects.requireNonNull(config.getString("uri"))).resolve("websocket/minecraft"));
@@ -42,19 +44,10 @@ public class WsListener extends WebSocketClient {
     }
 
     // 处理命令请求
-    private List<String> command(String data) {
-        CountDownLatch latch = new CountDownLatch(1);
-        CustomCommandSender sender = new CustomCommandSender(Bukkit.getConsoleSender());
-        Bukkit.getScheduler().runTask(this.plugin, () -> {
-            this.server.dispatchCommand(sender, data);
-            latch.countDown();
-        });
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        return sender.messages;
+    private String command(String data) {
+    //    CustomCommandSender customSender = new CustomCommandSender(this.server.getConsoleSender());
+        Bukkit.getScheduler().runTask(this.plugin, () -> this.server.dispatchCommand(this.server.getConsoleSender(), data));
+        return "命令已发送到服务器！当前插件不支持获取命令返回值。";
     }
 
     // 获取在线玩家列表
@@ -62,6 +55,16 @@ public class WsListener extends WebSocketClient {
         List<String> players = new ArrayList<>();
         for (Player player : this.server.getOnlinePlayers()) players.add(player.getName());
         return players;
+    }
+
+    private List<Double> serverOccupation(String data) {
+        Runtime runtime = Runtime.getRuntime();
+        List<Double> serverOccupations = new ArrayList<>();
+        long freeMemory = runtime.freeMemory();
+        long totalMemory = runtime.totalMemory();
+        serverOccupations.add(this.bean.getProcessCpuLoad() * 100);
+        serverOccupations.add(((double) ((totalMemory - freeMemory)) / totalMemory) * 100);
+        return serverOccupations;
     }
 
     @Override
@@ -75,7 +78,7 @@ public class WsListener extends WebSocketClient {
         HashMap<String, ?> map = this.utils.decode(message);
         String data = (String) map.get("data");
         String event_type = (String) map.get("type");
-
+        this.logger.info("收到消息机器人消息 " + map);
         Object response;
         HashMap<String, Object> responseMessage = new HashMap<>();
 
@@ -85,6 +88,9 @@ public class WsListener extends WebSocketClient {
         } else if (Objects.equals(event_type, "player_list")) {
             // 如果事件类型是"player_list"，则调用playerList方法处理
             response = this.playerList(data);
+        } else if (Objects.equals(event_type, "server_occupation")) {
+            // 如果事件类型是"server_occupation"，则调用serverOccupation方法处理
+            response = this.serverOccupation(data);
         } else {
             // 如果事件类型未知，则记录警告信息并返回失败响应
             this.logger.warning("[Listener] 未知的事件类型: " + event_type);
@@ -94,6 +100,7 @@ public class WsListener extends WebSocketClient {
         }
         responseMessage.put("success", true);
         responseMessage.put("data", response);
+        this.logger.info("发送响应消息 " + responseMessage);
         // 构造成功响应并发送
         this.send(this.utils.encode(responseMessage));
     }
@@ -103,7 +110,7 @@ public class WsListener extends WebSocketClient {
         this.logger.info("[Listener] 与机器人的链接已关闭！");
         if (this.serverRunning) {
             this.logger.info("[Listener] 正在尝试重新链接……");
-            Bukkit.getScheduler().runTaskLater(this.plugin, this::connect, 100);
+            Bukkit.getScheduler().runTaskLater(this.plugin, this::reconnect, 100);
         }
     }
 

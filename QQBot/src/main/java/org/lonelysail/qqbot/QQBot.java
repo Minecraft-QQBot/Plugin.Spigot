@@ -1,5 +1,6 @@
 package org.lonelysail.qqbot;
 
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.lonelysail.qqbot.server.EventListener;
@@ -35,11 +36,7 @@ public final class QQBot extends JavaPlugin {
         QQCommand command = new QQCommand(this.websocketSender, this.config.getString("name"));
         Objects.requireNonNull(this.getCommand("qq")).setExecutor(command);
         this.getServer().getPluginManager().registerEvents(eventListener, this);
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException ignored) {
-        }
-        this.websocketSender.sendServerStartup();
+        Bukkit.getScheduler().runTaskLater(this, this.websocketSender::sendServerStartup, 20);
     }
 
     // 插件禁用时调用的方法，关闭各种服务
@@ -47,8 +44,8 @@ public final class QQBot extends JavaPlugin {
     public void onDisable() {
         this.websocketSender.sendServerShutdown();
         this.websocketSender.close();
-        this.websocketListener.close();
         this.websocketListener.serverRunning = false;
+        this.websocketListener.close();
     }
 
 }
