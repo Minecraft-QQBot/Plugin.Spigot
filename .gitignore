@@ -1,0 +1,15 @@
+QQBot/target/original-QQBot-2.0.0-SNAPSHOT.jar
+QQBot/target/QQBot-2.0.0-SNAPSHOT.jar
+QQBot/target/classes/config.yml
+QQBot/target/classes/plugin.yml
+QQBot/target/classes/org/lonelysail/qqbot/QQBot.class
+QQBot/target/classes/org/lonelysail/qqbot/Utils.class
+QQBot/target/classes/org/lonelysail/qqbot/Utils$1.class
+QQBot/target/classes/org/lonelysail/qqbot/server/CustomCommandSender.class
+QQBot/target/classes/org/lonelysail/qqbot/server/EventListener.class
+QQBot/target/classes/org/lonelysail/qqbot/server/QQCommand.class
+QQBot/target/classes/org/lonelysail/qqbot/websocket/WsListener.class
+QQBot/target/classes/org/lonelysail/qqbot/websocket/WsSender.class
+QQBot/target/maven-archiver/pom.properties
+QQBot/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
+QQBot/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
