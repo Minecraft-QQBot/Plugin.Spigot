@@ -2,7 +2,7 @@
 和 [BotServer](https://github.com/Minecraft-QQBot/BotServer) 对接的 Spigot 插件，同时也支持 Paper 和 Bukkit 服务器。
 
 
-你可以到 [Releases](https://github.com/Minecraft-QQBot/McdReforged/releases) 下载最新版本的服务器插件。
+你可以到 [Releases](https://github.com/Minecraft-QQBot/Spigot/releases) 下载最新版本的服务器插件。
 
 ## 功能
 
