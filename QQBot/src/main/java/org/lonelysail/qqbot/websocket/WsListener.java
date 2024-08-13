@@ -38,7 +38,6 @@ public class WsListener extends WebSocketClient {
         HashMap<String, String> headers = new HashMap<>();
         headers.put("name", config.getString("name"));
         headers.put("token", config.getString("token"));
-        this.setDaemon(true);
         this.addHeader("type", "Spigot");
         this.addHeader("info", this.utils.encode(headers));
     }
@@ -77,7 +76,7 @@ public class WsListener extends WebSocketClient {
         HashMap<String, ?> map = this.utils.decode(message);
         Object data = map.get("data");
         String event_type = (String) map.get("type");
-        this.logger.info("收到消息机器人消息 " + map);
+        this.logger.("收到消息机器人消息 " + map);
         Object response = null;
         HashMap<String, Object> responseMessage = new HashMap<>();
 

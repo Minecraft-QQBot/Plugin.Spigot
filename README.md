@@ -1,4 +1,7 @@
 # Spigot
+
+### [**文档**](https://qqbot.bugjump.xyz/)
+
 和 [BotServer](https://github.com/Minecraft-QQBot/BotServer) 对接的 Spigot 插件，同时也支持 Paper 和 Bukkit 服务器。
 
 

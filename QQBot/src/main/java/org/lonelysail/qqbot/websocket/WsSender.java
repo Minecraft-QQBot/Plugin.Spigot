@@ -35,7 +35,6 @@ public class WsSender extends WebSocketClient {
         HashMap<String, String> headers = new HashMap<>();
         headers.put("name", config.getString("name"));
         headers.put("token", config.getString("token"));
-        this.setDaemon(true);
         this.addHeader("info", this.utils.encode(headers));
     }
 
@@ -47,9 +46,11 @@ public class WsSender extends WebSocketClient {
 //            尝试重连三次
         for (int count = 0; count < 3; count ++) {
             logger.warning("[Sender] 检测到与机器人的连接已断开！正在尝试重连……");
+            this.reconnect();
             try {
-                this.reconnectBlocking();
-            } catch (InterruptedException e) {
+//                等待重连
+                Thread.sleep(1000);
+            } catch (InterruptedException error) {
                 Thread.currentThread().interrupt();
             }
 //                重连成功后跳出重连尝试循环
@@ -82,7 +83,7 @@ public class WsSender extends WebSocketClient {
 //        等待响应
         this.lock.lock();
         try {
-            responseReceived = this.condition.await(10, TimeUnit.SECONDS);
+            responseReceived = this.condition.await(5, TimeUnit.SECONDS);
         } catch (InterruptedException error) {
             Thread.currentThread().interrupt();
         } finally {
