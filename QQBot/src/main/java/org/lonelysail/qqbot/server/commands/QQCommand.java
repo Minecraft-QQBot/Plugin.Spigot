@@ -1,4 +1,4 @@
-package org.lonelysail.qqbot.server;
+package org.lonelysail.qqbot.server.commands;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

@@ -3,20 +3,24 @@ package org.lonelysail.qqbot.websocket;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.java_websocket.handshake.ServerHandshake;
 import org.lonelysail.qqbot.Utils;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
 public class WsSender extends WebSocketClient {
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(WsSender.class);
     private String message;
 
     private final Logger logger;
@@ -35,38 +39,61 @@ public class WsSender extends WebSocketClient {
         this.addHeader("info", this.utils.encode(headers));
     }
 
+    public boolean isConnected() {
+        return this.isOpen() && !this.isClosed() && !this.isClosing();
+    }
+
+    public boolean tryReconnect() {
+//            尝试重连三次
+        for (int count = 0; count < 3; count ++) {
+            logger.warning("[Sender] 检测到与机器人的连接已断开！正在尝试重连……");
+            try {
+                this.reconnectBlocking();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+//                重连成功后跳出重连尝试循环
+            if (this.isConnected()) {
+                this.logger.warning("[Sender] 与机器人连接成功！");
+                return true;
+            }
+        }
+        return false;
+    }
+
     //    发送事件基本函数
     public boolean sendData(String event_type, Object data) {
-        if (this.isClosed()) {
-            this.logger.warning("[Sender] 无法发送数据，因为连接已关闭！正在尝试重新连接……");
-            this.reconnect();
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException error) {
-                this.logger.warning("[Sender] 无法重新连接，请检查机器人运行是否正常！");
-            }
-            if (this.isClosed()) {
-                this.logger.warning("[Sender] 无法重新连接，请检查机器人运行是否正常！");
+//        重连模块
+        if (!this.isConnected()) {
+            if (!this.tryReconnect()) {
                 return false;
             }
         }
+        boolean responseReceived = false;
         HashMap<String, Object> messageData = new HashMap<>();
         messageData.put("data", data);
         messageData.put("type", event_type);
-        this.send(this.utils.encode(messageData));
+        try {
+            this.send(this.utils.encode(messageData));
+        } catch (WebsocketNotConnectedException error) {
+            logger.info("[Sender] 发送数据失败！与机器人的连接已断开。");
+            return false;
+        }
 //        等待响应
         this.lock.lock();
         try {
-            while (this.message == null) this.condition.await();
+            responseReceived = this.condition.await(10, TimeUnit.SECONDS);
         } catch (InterruptedException error) {
             Thread.currentThread().interrupt();
         } finally {
             this.lock.unlock();
         }
-        HashMap<String, ?> response = this.utils.decode(this.message);
-        this.message = null;
+        if (!responseReceived) {
+            this.logger.warning("[Sender] 等待响应超时。");
+            return false;
+        }
 //        返回是否成功
-        return (boolean) response.get("success");
+        return (boolean) this.utils.decode(this.message).get("success");
     }
 
     public void sendServerStartup() {
@@ -136,6 +163,7 @@ public class WsSender extends WebSocketClient {
 
     @Override
     public void onError(Exception ex) {
-
+        this.logger.warning("[Sender] 机器人连接发生 " + ex.getMessage() + " 错误！");
+        ex.printStackTrace();
     }
 }

@@ -4,7 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.lonelysail.qqbot.server.EventListener;
-import org.lonelysail.qqbot.server.QQCommand;
+import org.lonelysail.qqbot.server.commands.QQCommand;
 import org.lonelysail.qqbot.websocket.WsListener;
 import org.lonelysail.qqbot.websocket.WsSender;
 

@@ -70,27 +70,31 @@ public class WsListener extends WebSocketClient {
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
         this.logger.info("[Listener] 与机器人成功建立链接！");
-        this.send("Ok");
     }
 
     @Override
     public void onMessage(String message) {
         HashMap<String, ?> map = this.utils.decode(message);
-        String data = (String) map.get("data");
+        Object data = map.get("data");
         String event_type = (String) map.get("type");
         this.logger.info("收到消息机器人消息 " + map);
-        Object response;
+        Object response = null;
         HashMap<String, Object> responseMessage = new HashMap<>();
 
-        if (Objects.equals(event_type, "command")) {
+        if (Objects.equals(event_type, "message")) {
+            String broadcastMessage = this.utils.toStringMessage((List) data);
+            this.server.broadcastMessage(broadcastMessage);
+            this.logger.info("[Listener] 收到广播消息 " + broadcastMessage);
+            return;
+        } else if (Objects.equals(event_type, "command")) {
             // 如果事件类型是"command"，则调用command方法处理
-            response = this.command(data);
+            response = this.command((String) data);
         } else if (Objects.equals(event_type, "player_list")) {
             // 如果事件类型是"player_list"，则调用playerList方法处理
-            response = this.playerList(data);
+            response = this.playerList((String) data);
         } else if (Objects.equals(event_type, "server_occupation")) {
             // 如果事件类型是"server_occupation"，则调用serverOccupation方法处理
-            response = this.serverOccupation(data);
+            response = this.serverOccupation((String) data);
         } else {
             // 如果事件类型未知，则记录警告信息并返回失败响应
             this.logger.warning("[Listener] 未知的事件类型: " + event_type);
@@ -116,5 +120,7 @@ public class WsListener extends WebSocketClient {
 
     @Override
     public void onError(Exception ex) {
+        this.logger.warning("[Listener] 机器人连接发生 " + ex.getMessage() + " 错误！");
+        ex.printStackTrace();
     }
 }
