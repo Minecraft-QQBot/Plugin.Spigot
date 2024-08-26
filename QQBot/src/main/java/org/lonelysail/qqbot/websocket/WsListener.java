@@ -68,7 +68,7 @@ public class WsListener extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
-        this.logger.info("[Listener] 与机器人成功建立链接！");
+        this.logger.info("[Listener] 与机器人成功建立连接！");
     }
 
     @Override
@@ -76,14 +76,14 @@ public class WsListener extends WebSocketClient {
         HashMap<String, ?> map = this.utils.decode(message);
         Object data = map.get("data");
         String event_type = (String) map.get("type");
-        this.logger.("收到消息机器人消息 " + map);
-        Object response = null;
+        this.logger.fine("收到消息机器人消息 " + map);
+        Object response;
         HashMap<String, Object> responseMessage = new HashMap<>();
 
         if (Objects.equals(event_type, "message")) {
             String broadcastMessage = this.utils.toStringMessage((List) data);
             this.server.broadcastMessage(broadcastMessage);
-            this.logger.info("[Listener] 收到广播消息 " + broadcastMessage);
+            this.logger.fine("[Listener] 收到广播消息 " + broadcastMessage);
             return;
         } else if (Objects.equals(event_type, "command")) {
             // 如果事件类型是"command"，则调用command方法处理
@@ -103,14 +103,14 @@ public class WsListener extends WebSocketClient {
         }
         responseMessage.put("success", true);
         responseMessage.put("data", response);
-        this.logger.info("发送响应消息 " + responseMessage);
+        this.logger.fine("发送响应消息 " + responseMessage);
         // 构造成功响应并发送
         this.send(this.utils.encode(responseMessage));
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        this.logger.info("[Listener] 与机器人的链接已关闭！");
+        this.logger.warning("[Listener] 与机器人的链接已关闭！");
         if (this.serverRunning) {
             this.logger.info("[Listener] 正在尝试重新链接……");
             Bukkit.getScheduler().runTaskLater(this.plugin, this::reconnect, 100);

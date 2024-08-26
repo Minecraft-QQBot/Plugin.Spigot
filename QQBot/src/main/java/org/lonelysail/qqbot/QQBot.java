@@ -27,7 +27,7 @@ public final class QQBot extends JavaPlugin {
     // 插件启用时调用的方法，初始化并启动各种服务
     @Override
     public void onEnable() {
-        this.getLogger().info("正在初始化与机器人的链接……");
+        this.getLogger().info("正在初始化与机器人的连接……");
         this.websocketSender = new WsSender(this, this.config);
         this.websocketSender.connect();
         this.websocketListener = new WsListener(this, this.config);

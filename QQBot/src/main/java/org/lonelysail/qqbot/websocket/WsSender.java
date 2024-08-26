@@ -55,7 +55,7 @@ public class WsSender extends WebSocketClient {
             }
 //                重连成功后跳出重连尝试循环
             if (this.isConnected()) {
-                this.logger.warning("[Sender] 与机器人连接成功！");
+                this.logger.info("[Sender] 与机器人连接成功！");
                 return true;
             }
         }
@@ -63,7 +63,7 @@ public class WsSender extends WebSocketClient {
     }
 
     //    发送事件基本函数
-    public boolean sendData(String event_type, Object data) {
+    public boolean sendData(String event_type, Object data, Boolean waitResponse) {
 //        重连模块
         if (!this.isConnected()) {
             if (!this.tryReconnect()) {
@@ -77,9 +77,10 @@ public class WsSender extends WebSocketClient {
         try {
             this.send(this.utils.encode(messageData));
         } catch (WebsocketNotConnectedException error) {
-            logger.info("[Sender] 发送数据失败！与机器人的连接已断开。");
+            logger.warning("[Sender] 发送数据失败！与机器人的连接已断开。");
             return false;
         }
+        if (!waitResponse) return true;
 //        等待响应
         this.lock.lock();
         try {
@@ -99,23 +100,23 @@ public class WsSender extends WebSocketClient {
 
     public void sendServerStartup() {
         HashMap<String, Object> data = new HashMap<>();
-        if (this.sendData("server_startup", data)) this.logger.info("发送服务器启动消息成功！");
+        if (this.sendData("server_startup", data, true)) this.logger.fine("发送服务器启动消息成功！");
         else this.logger.warning("发送服务器启动消息失败！请检查机器人是否启动后再次尝试。");
     }
 
     public void sendServerShutdown() {
         HashMap<String, Object> data = new HashMap<>();
-        if (this.sendData("server_shutdown", data)) this.logger.info("发送服务器关闭消息成功！");
+        if (this.sendData("server_shutdown", data, true)) this.logger.fine("发送服务器关闭消息成功！");
         else this.logger.warning("发送服务器关闭消息失败！请检查机器人是否启动后再次尝试。");
     }
 
     public void sendPlayerLeft(String name) {
-        if (this.sendData("player_left", name)) this.logger.info("发送玩家离开消息成功！");
+        if (this.sendData("player_left", name, true)) this.logger.fine("发送玩家离开消息成功！");
         else this.logger.warning("发送玩家离开消息失败！请检查机器人是否启动后再次尝试。");
     }
 
     public void sendPlayerJoined(String name) {
-        if (this.sendData("player_joined", name)) this.logger.info("发送玩家进入消息成功！");
+        if (this.sendData("player_joined", name, true)) this.logger.fine("发送玩家进入消息成功！");
         else this.logger.warning("发送玩家进入消息失败！请检查机器人是否启动后再次尝试。");
     }
 
@@ -123,26 +124,26 @@ public class WsSender extends WebSocketClient {
         List<String> data = new ArrayList<>();
         data.add(name);
         data.add(message);
-        if (this.sendData("player_chat", data)) this.logger.info("发送玩家消息成功！");
-        else this.logger.warning("发送玩家消息失败！请检查机器人是否启动后再次尝试。");
+        this.sendData("player_chat", data, false);
+        this.logger.fine("发送玩家消息成功！");
     }
 
     public void sendPlayerDeath(String name, String message) {
         List<String> data = new ArrayList<>();
         data.add(name);
         data.add(message);
-        if (this.sendData("player_death", data)) this.logger.info("发送玩家死亡消息成功！");
+        if (this.sendData("player_death", data, true)) this.logger.fine("发送玩家死亡消息成功！");
         else this.logger.warning("发送玩家死亡消息失败！请检查机器人是否启动后再次尝试。");
     }
 
     public boolean sendSynchronousMessage(String message) {
-        return this.sendData("message", message);
+        return this.sendData("message", message, true);
     }
 
 
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
-        this.logger.info("[Sender] 与机器人成功建立链接！");
+        this.logger.fine("[Sender] 与机器人成功建立链接！");
     }
 
     @Override
